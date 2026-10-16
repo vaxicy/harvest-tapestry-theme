@@ -76,11 +76,11 @@ def soften(x):
         if .7<h<.88:
             rgb=colorsys.hls_to_rgb(.24,l,min(s,.23));return '#'+''.join(f'{round(c*255):02X}' for c in rgb)+x[7:]
     return x
-m=json.loads((source/'package.json').read_text());m.update(name='aqua-veil-theme',displayName='Aqua Veil Theme',description='Muted slate blue, sage leaves and pressed-flower pink in coordinated light and dark themes.',keywords=['theme','light','dark','garden','sage','pastel','vintage']);m['galleryBanner']['color']='#2B3238'
-for t in m['contributes']['themes']:t['label']=t['label'].replace('Wisteria Blush','Aqua Veil');t['path']=t['path'].replace('wisteria-blush','aqua-veil')
+m=json.loads((source/'package.json').read_text());m.update(name='harvest-tapestry-theme',displayName='Harvest Tapestry Theme',description='Muted slate blue, sage leaves and pressed-flower pink in coordinated light and dark themes.',keywords=['theme','light','dark','garden','sage','pastel','vintage']);m['galleryBanner']['color']='#2B3238'
+for t in m['contributes']['themes']:t['label']=t['label'].replace('Wisteria Blush','Harvest Tapestry');t['path']=t['path'].replace('wisteria-blush','harvest-tapestry')
 write(base/'package.json',m)
 for i,v in enumerate(['light','dark']):
-    t=soften(json.loads((source/'themes'/f'wisteria-blush-{v}-color-theme.json').read_text()));t['name']=f'Aqua Veil Theme {v.title()}'
+    t=soften(json.loads((source/'themes'/f'wisteria-blush-{v}-color-theme.json').read_text()));t['name']=f'Harvest Tapestry Theme {v.title()}'
     for row in rows.strip().splitlines():
         keys,l,d=row.split('|')
         for key in keys.split():t['colors'][key]='#'+[l,d][i]
@@ -88,24 +88,24 @@ for i,v in enumerate(['light','dark']):
         key=','.join(rule['scope'])
         if key in palette:rule['settings']['foreground']='#'+palette[key][i]
     for key,scope in {'variable':'variable','parameter':'variable.parameter','property':'variable.other.property,support.variable.property','function':'entity.name.function,support.function','method':'entity.name.function,support.function','class':'entity.name.type,support.type,support.class','type':'entity.name.type,support.type,support.class','interface':'entity.name.type,support.type,support.class','variable.readonly':'constant.numeric,constant.language,variable.other.constant'}.items():t['semanticTokenColors'][key]='#'+palette[scope][i]
-    write(base/'themes'/f'aqua-veil-{v}-color-theme.json',t)
-for name in ['LICENSE','CHANGELOG.md','.vscodeignore']:(base/name).write_text((source/name).read_text(encoding='utf-8').replace('Wisteria Blush','Aqua Veil'),encoding='utf-8')
-for name in ['capture-real-screenshots.py','validate.py']:(base/'scripts'/name).write_text((source/'scripts'/name).read_text(encoding='utf-8').replace('Wisteria Blush','Aqua Veil').replace('wisteria-blush','aqua-veil'),encoding='utf-8')
+    write(base/'themes'/f'harvest-tapestry-{v}-color-theme.json',t)
+for name in ['LICENSE','CHANGELOG.md','.vscodeignore']:(base/name).write_text((source/name).read_text(encoding='utf-8').replace('Wisteria Blush','Harvest Tapestry'),encoding='utf-8')
+for name in ['capture-real-screenshots.py','validate.py']:(base/'scripts'/name).write_text((source/'scripts'/name).read_text(encoding='utf-8').replace('Wisteria Blush','Harvest Tapestry').replace('wisteria-blush','harvest-tapestry'),encoding='utf-8')
 demo=base/'scripts/demo-project';demo.mkdir(exist_ok=True)
 for p in (source/'scripts/demo-project').iterdir():
     if p.is_file():
-        text=p.read_text(encoding='utf-8').replace('Wisteria Blush','Aqua Veil').replace('WisteriaBlush','GardenLetter').replace('wisteria violet, dusty blush and peach','ice aqua, sea glass and quiet mist').replace('flower-inspired','water-inspired')
+        text=p.read_text(encoding='utf-8').replace('Wisteria Blush','Harvest Tapestry').replace('WisteriaBlush','GardenLetter').replace('wisteria violet, dusty blush and peach','slate blue, teal, cream, ochre, brick red and plum').replace('flower-inspired','tapestry-inspired')
         for a,b in [('E0BBE4','B8C3D3'),('957DAD','CEDABF'),('D291BC','E1C1D0'),('FEC8D8','EFD1CD'),('FFDFD3','FDECCE')]:text=text.replace(a,b).replace(a.lower(),b.lower())
         for a,b in [('wisteria:','slate:'),('violet:','sage:'),('blush:','petal:'),('peach:','cream:'),('pink:','peach:'),('.wisteria','.slate'),('.peach','.cream')]:text=text.replace(a,b)
         (demo/p.name).write_text(text,encoding='utf-8')
-(base/'README.md').write_text('''# Aqua Veil Theme
+(base/'README.md').write_text('''# Harvest Tapestry Theme
 
 Muted slate blue, sage leaves and pressed-flower pink in coordinated light and dark themes.
 
 花园来信：奶油信纸、灰蓝墨迹、鼠尾草绿与干花藕粉。
 
-- **Aqua Veil Theme Light** — cream paper editor, sage panels and muted rose accents.
-- **Aqua Veil Theme Dark** — charcoal slate editor, sage panels and pastel syntax colors.
+- **Harvest Tapestry Theme Light** — cream paper editor, sage panels and muted rose accents.
+- **Harvest Tapestry Theme Dark** — charcoal slate editor, sage panels and pastel syntax colors.
 
 | Region | Light | Dark |
 | --- | --- | --- |
@@ -125,7 +125,8 @@ Includes semantic highlighting, terminal colors, Git decorations, search and sel
 
 Publisher: **lilinhuang** · Version: **1.0.0**
 
-[Marketplace](https://marketplace.visualstudio.com/items?itemName=lilinhuang.aqua-veil-theme)
+[Marketplace](https://marketplace.visualstudio.com/items?itemName=lilinhuang.harvest-tapestry-theme)
 ''',encoding='utf-8')
 print('Created',base)
+
 

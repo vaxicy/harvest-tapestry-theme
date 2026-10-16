@@ -1,7 +1,7 @@
-// Aqua Veil Theme — ice aqua, sea glass and quiet mist
+// Harvest Tapestry Theme — slate ink, sage, cream paper and pressed-flower pink
 import { readFile } from 'node:fs/promises';
 
-const FLOWER_PALETTE = {
+const TAPESTRY_PALETTE = {
   slate: '#B8C3D3',
   sage: '#CEDABF',
   petal: '#E1C1D0',
@@ -9,13 +9,13 @@ const FLOWER_PALETTE = {
   cream: '#FDECCE',
 };
 
-export class GardenLetter {
-  constructor(name = 'Morning sky') {
+export class HarvestTapestry {
+  constructor(name = 'Harvest moon') {
     this.name = name;
-    this.colors = Object.values(FLOWER_PALETTE);
+    this.colors = Object.values(TAPESTRY_PALETTE);
   }
 
-  /** Blend two colors into a soft water-inspired shade. */
+  /** Blend two colors into a soft woven shade. */
   blend(from, to, ratio = 0.5) {
     const parse = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
     const [a, b] = [parse(from), parse(to)];
@@ -29,6 +29,5 @@ export class GardenLetter {
   }
 }
 
-const cloud = new GardenLetter();
-console.log(cloud.blend(FLOWER_PALETTE.slate, FLOWER_PALETTE.cream));
-
+const weave = new HarvestTapestry();
+console.log(weave.blend(TAPESTRY_PALETTE.slate, TAPESTRY_PALETTE.cream));

@@ -1,4 +1,3 @@
-# Aqua Veil
+# Harvest Tapestry
 
-Soft ice blue and lavender.
-
+Cream paper, slate ink, sage green and pressed-flower pink.

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Capture real VS Code windows running the Aqua Veil theme.
+"""Capture real VS Code windows running the Harvest Tapestry theme.
 
 For every variant (light / dark) the script:
   1. builds an isolated VS Code profile (own --user-data-dir / --extensions-dir),
@@ -27,7 +27,7 @@ import subprocess
 import sys
 import time
 
-from PIL import Image, ImageGrab
+from PIL import Image, ImageGrab, ImageStat
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CODE_EXE = r"D:\安装\Microsoft VS Code\Code.exe"
@@ -40,13 +40,13 @@ WIDTH, HEIGHT = 1440, 900
 # crop a few extra physical pixels so no dark outline survives the downscale.
 EXTRA_CROP = 3
 PUBLISHER = "lilinhuang"
-NAME = "aqua-veil-theme"
+NAME = "harvest-tapestry-theme"
 VERSION = "1.0.0"
-WORK_NAME = "aqua-veil-demo"   # demo folder name doubles as the window marker
+WORK_NAME = "harvest-tapestry-demo"   # demo folder name doubles as the window marker
 
 VARIANTS = [
-    ("light", "Aqua Veil Theme Light"),
-    ("dark", "Aqua Veil Theme Dark"),
+    ("light", "Harvest Tapestry Theme Light"),
+    ("dark", "Harvest Tapestry Theme Dark"),
 ]
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -215,9 +215,41 @@ def print_window(hwnd):
         user32.ReleaseDC(hwnd, hdc)
 
 
+def focus_window(hwnd, tries=6):
+    """PrintWindow paints the title bar in its *inactive* colours unless the window
+    is the foreground window, which would make the first row of the capture differ
+    from titleBar.activeBackground. Nudge the window forward before grabbing;
+    ownership chains make GetForegroundWindow unreliable here, so the caller checks
+    the captured title row instead of trusting this."""
+    fg = user32.GetForegroundWindow()
+    if fg == hwnd or (fg and user32.IsChild(fg, hwnd)):
+        return
+    for _ in range(tries):
+        user32.ShowWindow(hwnd, SW_RESTORE)
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+        time.sleep(0.4)
+        if user32.GetForegroundWindow() == hwnd:
+            break
+    time.sleep(0.8)
+
+
+def expected_title_row(theme_label):
+    """RGB of titleBar.activeBackground for the manifest theme with this label."""
+    with open(os.path.join(BASE, "package.json"), encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    for entry in manifest["contributes"]["themes"]:
+        if entry["label"] == theme_label:
+            path = os.path.join(BASE, entry["path"].removeprefix("./"))
+            with open(path, encoding="utf-8") as fh:
+                value = json.load(fh)["colors"]["titleBar.activeBackground"]
+            value = value.lstrip("#")
+            return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
+    raise KeyError(f"no theme labelled {theme_label!r} in package.json")
+
+
 def screen_grab(hwnd):
-    user32.SetForegroundWindow(hwnd)
-    time.sleep(1.6)
+    focus_window(hwnd)
     left, top, w, h = window_rect(hwnd)
     return ImageGrab.grab(bbox=(left, top, left + w, top + h), all_screens=True)
 
@@ -309,6 +341,26 @@ def prepare_profile(variant, theme_label):
     return user_dir, ext_dir, work_dir
 
 
+def grab_frame(hwnd, insets):
+    """Grab the window and trim it down to exactly WIDTH x HEIGHT."""
+    img = print_window(hwnd)
+    print(f"printwindow {img.size}")
+    if looks_empty(img):
+        print("empty frame, falling back to screen grab")
+        img = screen_grab(hwnd)
+    if any(insets):
+        left, top, right, bottom = insets
+        img = img.crop((left, top, img.width - right, img.height - bottom))
+        print(f"cropped the invisible frame -> {img.size}")
+    if EXTRA_CROP:
+        img = img.crop((EXTRA_CROP, EXTRA_CROP,
+                        img.width - EXTRA_CROP, img.height - EXTRA_CROP))
+        print(f"cropped the 1px OS frame line -> {img.size}")
+    if img.size != (WIDTH, HEIGHT):
+        img = img.resize((WIDTH, HEIGHT), Image.LANCZOS)
+    return img
+
+
 def capture(variant, theme_label, marker):
     close_windows(marker)
     time.sleep(1.0)
@@ -343,21 +395,20 @@ def capture(variant, theme_label, marker):
                   HEIGHT * scale + insets[1] + insets[3])
     time.sleep(4.0)
 
-    img = print_window(hwnd)
-    print(f"[{variant}] printwindow {img.size}")
-    if looks_empty(img):
-        print(f"[{variant}] empty frame, falling back to screen grab")
-        img = screen_grab(hwnd)
-    if any(insets):
-        left, top, right, bottom = insets
-        img = img.crop((left, top, img.width - right, img.height - bottom))
-        print(f"[{variant}] cropped the invisible frame -> {img.size}")
-    if EXTRA_CROP:
-        img = img.crop((EXTRA_CROP, EXTRA_CROP,
-                        img.width - EXTRA_CROP, img.height - EXTRA_CROP))
-        print(f"[{variant}] cropped the 1px OS frame line -> {img.size}")
-    if img.size != (WIDTH, HEIGHT):
-        img = img.resize((WIDTH, HEIGHT), Image.LANCZOS)
+    expected = expected_title_row(theme_label)
+    img = None
+    for attempt in range(1, 4):
+        focus_window(hwnd)
+        img = grab_frame(hwnd, insets)
+        row = ImageStat.Stat(img.crop((0, 0, img.width, 1))).mean
+        if max(abs(a - b) for a, b in zip(row, expected)) < 4:
+            break
+        print(f"[{variant}] title row {[round(v) for v in row]} != {expected}, "
+              f"grabbing again")
+        time.sleep(2.0)
+    else:
+        print(f"[{variant}] warning: title bar row is not titleBar.activeBackground",
+              file=sys.stderr)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     out = os.path.join(OUT_DIR, f"screenshot-{variant}.png")
@@ -391,4 +442,5 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
